@@ -1,23 +1,21 @@
 cmake_minimum_required(VERSION 3.3)
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
-
 project(libcxml)
 
 
-set(forceCpp11 true)
+#### Configuration
+
+set(targetWindows false)
+set(enableDebug false)
+set(static false)
+set(disableTests false)
+set(forceCpp11 true) #note libxml++ requires C++11
 
 
-#set(Boost_USE_STATIC_LIBS        ON) # only find static libs
-set(Boost_USE_MULTITHREADED      ON)
-#set(Boost_USE_STATIC_RUNTIME    OFF)
+#### /Configuration
 
-find_package(Boost REQUIRED COMPONENTS filesystem unit_test_framework)
-find_package(LibXml++ REQUIRED)
 
-if (forceCpp11)
-    set(OPTIONS ${OPTIONS} --force-cpp11)
-endif()
 
+#### Platform dependent configuration
 
 set(PKG_CONFIG_PATH_LIST
         /usr/local/opt/libxml2/lib/pkgconfig
@@ -26,6 +24,24 @@ set(PKG_CONFIG_PATH_LIST
         /usr/local/opt/libffi/lib/pkgconfig
         /usr/local/opt/openssl/lib/pkgconfig)
 
+#### /Platform dependent configuration
+
+
+if (targetWindows)
+    set(OPTIONS ${OPTIONS} --target-windows)
+endif()
+if (enableDebug)
+    set(OPTIONS ${OPTIONS} --enabled-debug)
+endif()
+if (static)
+    set(OPTIONS ${OPTIONS} --static)
+endif()
+if (disableTests)
+    set(OPTIONS ${OPTIONS} --disable-tests)
+endif()
+if (forceCpp11)
+    set(OPTIONS ${OPTIONS} --force-cpp11)
+endif()
 
 
 set(PKG_CONFIG_PATH)
@@ -38,23 +54,22 @@ foreach(PATH IN ITEMS ${PKG_CONFIG_PATH_LIST})
 endforeach()
 
 
-add_custom_target(configure
-#        COMMAND "echo" PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
+add_custom_target(waf-configure
         COMMAND "${CMAKE_COMMAND}" -E env PKG_CONFIG_PATH="${PKG_CONFIG_PATH}" ./waf configure ${OPTIONS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "Configuring ${PROJECT_NAME}")
 
-add_custom_target(build
+add_custom_target(waf-build
         COMMAND "./waf" build
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "Building ${PROJECT_NAME}")
 
-add_custom_target(install_package
+add_custom_target(waf-install
         COMMAND "./waf" install
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "Installing ${PROJECT_NAME}")
 
-add_custom_target(clean_build
+add_custom_target(waf-clean
         COMMAND "./waf" clean
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         COMMENT "Building ${PROJECT_NAME}")
